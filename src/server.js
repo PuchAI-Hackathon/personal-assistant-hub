@@ -11,18 +11,20 @@ app.use(cors());
 app.use(express.json({ limit: "1mb" })); // Allow larger meeting transcripts
 app.use(express.urlencoded({ extended: true }));
 
-// ✅ MCP Validation endpoint — validate bearer token and return phone number
-app.get("/validate", (req, res) => {
-  const auth = req.headers.authorization || "";
-  const expectedToken = "abc123token";  // Replace with your actual token if different
-
-  if (auth !== `Bearer ${expectedToken}`) {
+// MCP validation endpoint required by Puch AI
+app.get("/mcp/validate", (req, res) => {
+  const authHeader = req.headers['authorization'] || '';
+  if (!authHeader.startsWith('Bearer ')) {
     return res.status(401).json({ error: "Unauthorized" });
   }
-
-  const myNumber = "918853131542"; // Your phone number in {country_code}{number} format
-  res.json({ number: myNumber });
+  const token = authHeader.split(' ')[1];
+  if (token !== 'abc123token') {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+  // Return phone number in {country_code}{number} format
+  res.json({ number: "918853131542" });
 });
+
 
 // Serve static UI
 app.use(express.static("public"));
