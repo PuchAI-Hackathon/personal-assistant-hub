@@ -18,6 +18,15 @@ app.use(express.static("public"));
 // API routes
 app.use("/api", apiRoutes);
 
+// src/server.js — add this block BEFORE the health check route
+// Puch requires a validate tool that returns your number in {country_code}{number} format
+app.get("/validate", (req, res) => {
+  // TODO: replace with your real number in format: {country_code}{number}, e.g. 919876543210
+  const myNumber = "918853131542";
+  res.json({ number: myNumber });
+});
+
+
 // Health check
 app.get("/health", (req, res) => {
   res.json({
