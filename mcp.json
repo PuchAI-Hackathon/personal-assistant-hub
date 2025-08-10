@@ -1,0 +1,9 @@
+{
+  "servers": [
+    {
+      "id": "my-mcp-server",
+      "url": "https://ai-personal-assistant-hub-multiple-ai.onrender.com/",
+      "authToken": "abc123token"
+    }
+  ]
+}
