@@ -9,25 +9,23 @@ dotenv.config();
 const app = express();
 
 app.use(cors());
-app.use(express.json({ limit: "1mb" })); // allow larger meeting transcripts
+app.use(express.json({ limit: "1mb" })); // Allow larger meeting transcripts
 app.use(express.urlencoded({ extended: true }));
 
 // Serve static UI
 app.use(express.static("public"));
 
-// API routes
-app.use("/api", apiRoutes);
-
-// src/server.js — add this block BEFORE the health check route
-// Puch requires a validate tool that returns your number in {country_code}{number} format
+// ✅ Validation endpoint (required by Puch Hackathon)
+// Must return your number in format {country_code}{number} e.g., 919876543210
 app.get("/validate", (req, res) => {
-  // TODO: replace with your real number in format: {country_code}{number}, e.g. 919876543210
-  const myNumber = "918853131542";
+  const myNumber = "918853131542"; // <-- Replace with your actual phone number if different
   res.json({ number: myNumber });
 });
 
+// API routes
+app.use("/api", apiRoutes);
 
-// Health check
+// Health check endpoint
 app.get("/health", (req, res) => {
   res.json({
     status: "ok",
@@ -44,5 +42,5 @@ app.use((err, req, res, next) => {
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`AI Personal Assistant Hub listening on port ${PORT}`);
+  console.log(`🚀 AI Personal Assistant Hub listening on port ${PORT}`);
 });
