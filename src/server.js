@@ -12,6 +12,15 @@ app.use(cors());
 app.use(express.json({ limit: "1mb" })); // Allow larger meeting transcripts
 app.use(express.urlencoded({ extended: true }));
 
+// ✅ MCP Validation endpoint — place this BEFORE static middleware
+app.get("/mcp/validate", (req, res) => {
+  res.json({
+    status: "ok",
+    message: "MCP server is running"
+  });
+});
+
+
 // Serve static UI
 app.use(express.static("public"));
 
@@ -43,11 +52,4 @@ app.use((err, req, res, next) => {
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`🚀 AI Personal Assistant Hub listening on port ${PORT}`);
-});
-// ✅ MCP Validation endpoint
-app.get("/mcp/validate", (req, res) => {
-  res.json({
-    status: "ok",
-    message: "MCP server is running"
-  });
 });
