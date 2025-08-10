@@ -44,3 +44,10 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`🚀 AI Personal Assistant Hub listening on port ${PORT}`);
 });
+// ✅ MCP Validation endpoint
+app.get("/mcp/validate", (req, res) => {
+  res.json({
+    status: "ok",
+    message: "MCP server is running"
+  });
+});
