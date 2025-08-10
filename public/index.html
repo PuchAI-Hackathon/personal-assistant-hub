@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>AI Personal Assistant Hub</title>
+<link rel="icon" href="data:," />
+<style>
+  :root {
+    --primary: #1976d2;
+    --primary-dark: #0d47a1;
+    --bg: #f5f7fa;
+    --card: #fff;
+    --positive: #e6f4ea;
+    --negative: #fff0f0;
+    --neutral: #f1f3f5;
+    --accent: #ffca28;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    background: var(--bg);
+    color: #222;
+    display: flex;
+    justify-content: center;
+    padding: 20px;
+  }
+
+  .container {
+    max-width: 980px;
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr 360px;
+    gap: 20px;
+    align-items: start;
+  }
+
+  header {
+    grid-column: 1 / -1;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom: 6px;
+  }
+
+  header h1 { margin: 0; color: var(--primary-dark); }
+  header .sub { color: #666; font-size: 14px; }
+
+  .panel {
+    background: var(--card);
+    padding: 18px;
+    border-radius: 12px;
+    box-shadow: 0 6px 18px rgba(16,24,40,0.08);
+  }
+
+  nav { display:flex; gap:10px; margin-bottom:12px; flex-wrap:wrap; }
+  nav button {
+    background: var(--primary);
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 8px;
+    cursor:pointer;
+    font-weight:600;
+    box-shadow: 0 4px 10px rgba(25,118,210,0.2);
+  }
+
+  .tools { display:flex; flex-direction:column; gap:12px; }
+
+  textarea, input[type="text"], input[type="number"] {
+    width:100%;
+    padding:10px 12px;
+    border-radius:8px;
+    border:1px solid #e3e8ef;
+    font-size:14px;
+    resize:vertical;
+  }
+
+  .action-btn {
+    background: var(--primary-dark);
+    color:white;
+    border:none;
+    padding:10px 14px;
+    border-radius:8px;
+    cursor:pointer;
+    font-weight:700;
+  }
+
+  pre {
+    background: var(--neutral);
+    padding:12px;
+    border-radius:8px;
+    white-space:pre-wrap;
+    max-height:260px;
+    overflow:auto;
+  }
+
+  /* Right column: dashboard */
+  .side { display:flex; flex-direction:column; gap:12px; }
+
+  .weather-card { display:flex; flex-direction:column; gap:8px; }
+  .weather-row { display:flex; justify-content:space-between; align-items:center; }
+
+  .voice-controls { display:flex; gap:8px; align-items:center; }
+  .mic-btn { background:#ff5252; color:white; border:none; padding:10px; border-radius:50%; cursor:pointer; width:46px; height:46px; display:flex; align-items:center; justify-content:center; font-weight:700; }
+
+  .speak-btn { background: #00bfa5; color:white; border:none; padding:8px 12px; border-radius:10px; cursor:pointer; }
+
+  /* Sentiment indicator */
+  .sentiment-chip { padding:6px 10px; border-radius:999px; background:#e8eef8; font-weight:700; color:var(--primary-dark); display:inline-block; }
+
+  /* Responsive */
+  @media (max-width: 880px) {
+    .container { grid-template-columns: 1fr; padding: 8px; }
+  }
+</style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div>
+        <h1>AI Personal Assistant Hub</h1>
+        <div class="sub">Voice • Sentiment-theme • Weather • Summarizer • Code explain</div>
+      </div>
+      <div style="text-align:right">
+        <span id="health-status" class="sentiment-chip">Checking...</span>
+      </div>
+    </header>
+
+    <main class="panel">
+      <nav>
+        <button onclick="showSection('meeting')">Meeting Summarizer</button>
+        <button onclick="showSection('code')">Code Explainer</button>
+        <button onclick="showSection('faq')">FAQ</button>
+        <button onclick="showSection('todo')">To-Do</button>
+        <button onclick="showSection('sentiment')">Sentiment</button>
+      </nav>
+
+      <div id="meeting" class="tools section">
+        <h3>Meeting Summarizer</h3>
+        <textarea id="meeting-text" rows="7" placeholder="Paste meeting notes or transcript here..."></textarea>
+        <div style="display:flex; gap:8px; margin-bottom:8px;">
+          <input id="meeting-max" type="number" min="1" max="10" value="4" style="width:120px;" />
+          <button class="action-btn" onclick="summarizeMeeting()">Summarize</button>
+          <button class="speak-btn" onclick="speakSummary()">Speak</button>
+        </div>
+        <h4>Summary</h4>
+        <pre id="meeting-summary">—</pre>
+        <h4>Action Items</h4>
+        <pre id="meeting-actions">—</pre>
+      </div>
+
+      <div id="code" class="tools section" style="display:none">
+        <h3>Code Explainer</h3>
+        <textarea id="code-text" rows="8" placeholder="Paste code here..."></textarea>
+        <div style="display:flex; gap:8px; margin-bottom:8px;">
+          <button class="action-btn" onclick="explainCode()">Explain</button>
+          <button class="speak-btn" onclick="speakCode()">Speak</button>
+        </div>
+        <h4>Explanation</h4>
+        <pre id="code-explanation">—</pre>
+      </div>
+
+      <div id="faq" class="tools section" style="display:none">
+        <h3>FAQ</h3>
+        <input id="faq-question" type="text" placeholder="Ask a question" />
+        <div style="display:flex; gap:8px; margin-top:8px;">
+          <button class="action-btn" onclick="askFAQ()">Ask</button>
+          <button class="speak-btn" onclick="speakFAQ()">Speak</button>
+        </div>
+        <h4>Answer</h4>
+        <pre id="faq-answer">—</pre>
+      </div>
+
+      <div id="todo" class="tools section" style="display:none">
+        <h3>To-Do</h3>
+        <div style="display:flex; gap:8px;">
+          <input id="todo-task" type="text" placeholder="New task" />
+          <button class="action-btn" onclick="addTodo()">Add</button>
+        </div>
+        <h4>Tasks</h4>
+        <pre id="todo-list">—</pre>
+      </div>
+
+      <div id="sentiment" class="tools section" style="display:none">
+        <h3>Sentiment Analyzer</h3>
+        <textarea id="sentiment-text" rows="5" placeholder="Type text to analyze sentiment..."></textarea>
+        <div style="display:flex; gap:8px; margin-top:8px;">
+          <button class="action-btn" onclick="analyzeSentiment()">Analyze</button>
+          <button class="speak-btn" onclick="speakSentiment()">Speak</button>
+        </div>
+        <h4>Result</h4>
+        <pre id="sentiment-result">—</pre>
+      </div>
+
+    </main>
+
+    <aside class="side">
+      <div class="panel weather-card">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <strong>Weather</strong>
+          <div class="voice-controls">
+            <input id="city-input" type="text" placeholder="City (e.g., London)" style="padding:8px;border-radius:8px;border:1px solid #e3e8ef" />
+            <button class="action-btn" onclick="fetchWeather()">Get</button>
+          </div>
+        </div>
+        <div id="weather-output">
+          <div class="weather-row"><span>City</span><span id="w-city">—</span></div>
+          <div class="weather-row"><span>Temp (°C)</span><span id="w-temp">—</span></div>
+          <div class="weather-row"><span>Description</span><span id="w-desc">—</span></div>
+          <div class="weather-row"><span>Humidity</span><span id="w-hum">—</span></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <strong>Voice</strong>
+          <div id="mic-group" class="voice-controls">
+            <button id="mic-btn" class="mic-btn" title="Start/Stop Listening">🎤</button>
+          </div>
+        </div>
+        <div style="margin-top:8px;">
+          <small>Click mic and say: "Summarize", "Explain code", "Weather in Paris", "Add todo buy milk", or "Analyze sentiment ..." </small>
+        </div>
+        <div style="margin-top:10px;">
+          <strong>Last recognized</strong>
+          <pre id="recognized">—</pre>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+<script>
+  // --- UI helpers ---
+  function showSection(id) {
+    document.querySelectorAll(".section").forEach(s => s.style.display = "none");
+    document.getElementById(id).style.display = "block";
+  }
+
+  // Health check
+  (async function health() {
+    try {
+      const r = await fetch('/health');
+      if (r.ok) {
+        const d = await r.json();
+        document.getElementById('health-status').textContent = 'Online';
+        document.getElementById('health-status').style.background = '#e8f5e9';
+        document.getElementById('health-status').style.color = '#1b5e20';
+      } else {
+        document.getElementById('health-status').textContent = 'Offline';
+      }
+    } catch (e) {
+      document.getElementById('health-status').textContent = 'Offline';
+    }
+  })();
+
+  // --- Meeting summarizer ---
+  async function summarizeMeeting() {
+    const text = document.getElementById('meeting-text').value;
+    const max = parseInt(document.getElementById('meeting-max').value) || 4;
+    const res = await fetch('/api/meeting-summarize', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ text, max_sentences: max })
+    });
+    const data = await res.json();
+    if (res.ok) {
+      document.getElementById('meeting-summary').textContent = data.summary;
+      document.getElementById('meeting-actions').textContent = data.action_items.join('\\n');
+      lastSummary = data.summary;
+      applyThemeFromText(data.summary);
+    } else {
+      document.getElementById('meeting-summary').textContent = 'Error: ' + (data.error || 'Unknown');
+    }
+  }
+
+  // --- Code explain ---
+  async function explainCode() {
+    const code = document.getElementById('code-text').value;
+    const res = await fetch('/api/code-explain', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ code })
+    });
+    const data = await res.json();
+    if (res.ok) {
+      document.getElementById('code-explanation').textContent = data.explanation.join('\\n');
+    } else {
+      document.getElementById('code-explanation').textContent = 'Error: ' + (data.error || 'Unknown');
+    }
+  }
+
+  // --- FAQ ---
+  async function askFAQ() {
+    const q = document.getElementById('faq-question').value;
+    const res = await fetch('/api/faq', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ question: q })
+    });
+    const data = await res.json();
+    if (res.ok) document.getElementById('faq-answer').textContent = data.answer;
+    else document.getElementById('faq-answer').textContent = 'Error: ' + (data.error || 'Unknown');
+  }
+
+  // --- Todos ---
+  async function addTodo() {
+    const task = document.getElementById('todo-task').value.trim();
+    if (!task) return alert('Please enter a task');
+    const res = await fetch('/api/todo/add', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ task })
+    });
+    const data = await res.json();
+    if (res.ok) {
+      document.getElementById('todo-list').textContent = data.todos.map(t => '• ' + t.task).join('\\n');
+      document.getElementById('todo-task').value = '';
+    } else alert('Error: ' + (data.error || 'Unknown'));
+  }
+
+  async function listTodos() {
+    const res = await fetch('/api/todo/list');
+    const data = await res.json();
+    if (res.ok) document.getElementById('todo-list').textContent = data.todos.map(t => '• ' + t.task).join('\\n');
+  }
+  listTodos();
+
+  // --- Sentiment ---
+  async function analyzeSentiment() {
+    const text = document.getElementById('sentiment-text').value;
+    const res = await fetch('/api/sentiment', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ text })
+    });
+    const data = await res.json();
+    if (res.ok) {
+      document.getElementById('sentiment-result').textContent = `${data.sentiment} (score: ${data.score})`;
+      applyThemeFromSentiment(data.sentiment);
+    } else document.getElementById('sentiment-result').textContent = 'Error: ' + (data.error || 'Unknown');
+  }
+
+  // Theme apply logic: for both summary text or sentiment result
+  function applyThemeFromSentiment(sentiment) {
+    if (sentiment === 'Positive') {
+      document.body.style.background = 'linear-gradient(180deg, #e6f4ea 0%, var(--bg) 100%)';
+    } else if (sentiment === 'Negative') {
+      document.body.style.background = 'linear-gradient(180deg, #fff0f0 0%, var(--bg) 100%)';
+    } else {
+      document.body.style.background = 'var(--bg)';
+    }
+  }
+
+  // Try to analyze sentiment from arbitrary text (used after summarize)
+  async function applyThemeFromText(text) {
+    try {
+      const r = await fetch('/api/sentiment', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ text })
+      });
+      const d = await r.json();
+      if (r.ok) applyThemeFromSentiment(d.sentiment);
+    } catch (e) { /* ignore */ }
+  }
+
+  // --- Weather ---
+  async function fetchWeather() {
+    const city = document.getElementById('city-input').value || 'New Delhi';
+    try {
+      const r = await fetch(`/api/weather?city=${encodeURIComponent(city)}`);
+      const d = await r.json();
+      if (!r.ok) {
+        alert('Weather error: ' + (d.error || JSON.stringify(d)));
+        return;
+      }
+      document.getElementById('w-city').textContent = `${d.city || '-'} ${d.country ? '(' + d.country + ')' : ''}`;
+      document.getElementById('w-temp').textContent = d.temp_c !== undefined ? d.temp_c + '°C' : '-';
+      document.getElementById('w-desc').textContent = d.description || '-';
+      document.getElementById('w-hum').textContent = d.humidity !== undefined ? d.humidity + '%' : '-';
+    } catch (err) {
+      alert('Weather fetch failed: ' + err.message);
+    }
+  }
+
+  // --- Voice (Web Speech API) ---
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  let recognition;
+  let listening = false;
+  if (SpeechRecognition) {
+    recognition = new SpeechRecognition();
+    recognition.lang = 'en-US';
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+    recognition.onresult = (event) => {
+      const text = event.results[0][0].transcript;
+      document.getElementById('recognized').textContent = text;
+      handleVoiceCommand(text);
+    };
+    recognition.onend = () => {
+      listening = false;
+      document.getElementById('mic-btn').textContent = '🎤';
+      document.getElementById('mic-btn').style.background = '#ff5252';
+    };
+  } else {
+    document.getElementById('mic-btn').title = 'Voice not supported in this browser';
+    document.getElementById('mic-btn').disabled = true;
+  }
+
+  document.getElementById('mic-btn').addEventListener('click', () => {
+    if (!recognition) return alert('SpeechRecognition not supported in this browser.');
+    if (!listening) {
+      recognition.start();
+      listening = true;
+      document.getElementById('mic-btn').textContent = '⏹';
+      document.getElementById('mic-btn').style.background = '#ef9a9a';
+    } else {
+      recognition.stop();
+    }
+  });
+
+  // Basic voice command routing:
+  async function handleVoiceCommand(text) {
+    const t = text.toLowerCase();
+    // Summarize: "summarize" or "summarize this"
+    if (t.includes('summarize')) {
+      showSection('meeting');
+      const meetingText = document.getElementById('meeting-text').value;
+      if (!meetingText) {
+        speakText('Please paste or say the meeting text into the meeting notes box.');
+      } else {
+        await summarizeMeeting();
+        speakText('Meeting summarized. I also changed the theme based on sentiment.');
+      }
+      return;
+    }
+
+    // Explain code: "explain code" or "explain this code"
+    if (t.includes('explain code') || t.includes('explain this code')) {
+      showSection('code');
+      await explainCode();
+      speakText('I explained the code. Check the explanation area.');
+      return;
+    }
+
+    // Weather: "weather in Paris"
+    if (t.startsWith('weather') || t.includes('weather in')) {
+      showSection('meeting'); // keep main view visible
+      const match = t.match(/weather(?: in)? (.*)/);
+      const city = match && match[1] ? match[1].trim() : document.getElementById('city-input').value || 'New Delhi';
+      document.getElementById('city-input').value = city;
+      await fetchWeather();
+      speakText('Here is the weather for ' + city);
+      return;
+    }
+
+    // Add todo: "add todo buy milk" or "add task buy milk"
+    if (t.startsWith('add todo') || t.startsWith('add task')) {
+      const match = t.replace('add todo','').replace('add task','').trim();
+      if (match) {
+        document.getElementById('todo-task').value = match;
+        await addTodo();
+        speakText('Added todo: ' + match);
+      } else {
+        speakText('What should I add to your todo list?');
+      }
+      return;
+    }
+
+    // Analyze sentiment: "analyze sentiment I am happy"
+    if (t.includes('sentiment') || t.includes('analyze sentiment')) {
+      const parts = t.split('sentiment');
+      const txt = parts[1] ? parts[1].trim() : '';
+      if (txt) {
+        document.getElementById('sentiment-text').value = txt;
+        await analyzeSentiment();
+        speakText('Analyzed sentiment for the given text.');
+      } else {
+        speakText('Please tell me the text to analyze after saying sentiment.');
+      }
+      return;
+    }
+
+    // fallback: speak back what user said
+    speakText("I heard: " + text);
+  }
+
+  // Text-to-speech helper
+  function speakText(text) {
+    if (!window.speechSynthesis) return alert('SpeechSynthesis not supported in this browser.');
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = 'en-US';
+    u.rate = 1;
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.speak(u);
+  }
+
+  // Convenience speak functions
+  function speakSummary() {
+    const txt = document.getElementById('meeting-summary').textContent;
+    if (txt && txt !== '—') speakText(txt);
+    else speakText('No summary available to speak.');
+  }
+  function speakCode() {
+    const txt = document.getElementById('code-explanation').textContent;
+    if (txt && txt !== '—') speakText(txt);
+    else speakText('No code explanation available to speak.');
+  }
+  function speakFAQ() {
+    const txt = document.getElementById('faq-answer').textContent;
+    if (txt && txt !== '—') speakText(txt);
+    else speakText('No FAQ answer available to speak.');
+  }
+  function speakSentiment() {
+    const txt = document.getElementById('sentiment-result').textContent;
+    if (txt && txt !== '—') speakText(txt);
+    else speakText('No sentiment result to speak.');
+  }
+</script>
+</body>
+</html>
