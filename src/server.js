@@ -1,4 +1,3 @@
-// src/server.js
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
@@ -12,24 +11,21 @@ app.use(cors());
 app.use(express.json({ limit: "1mb" })); // Allow larger meeting transcripts
 app.use(express.urlencoded({ extended: true }));
 
-// ✅ MCP Validation endpoint — place this BEFORE static middleware
-app.get("/mcp/validate", (req, res) => {
-  res.json({
-    status: "ok",
-    message: "MCP server is running"
-  });
-});
+// ✅ MCP Validation endpoint — validate bearer token and return phone number
+app.get("/validate", (req, res) => {
+  const auth = req.headers.authorization || "";
+  const expectedToken = "abc123token";  // Replace with your actual token if different
 
+  if (auth !== `Bearer ${expectedToken}`) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+
+  const myNumber = "918853131542"; // Your phone number in {country_code}{number} format
+  res.json({ number: myNumber });
+});
 
 // Serve static UI
 app.use(express.static("public"));
-
-// ✅ Validation endpoint (required by Puch Hackathon)
-// Must return your number in format {country_code}{number} e.g., 919876543210
-app.get("/validate", (req, res) => {
-  const myNumber = "918853131542"; // <-- Replace with your actual phone number if different
-  res.json({ number: myNumber });
-});
 
 // API routes
 app.use("/api", apiRoutes);
